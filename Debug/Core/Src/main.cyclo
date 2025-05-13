@@ -1,0 +1,13 @@
+../Core/Inc/SHTC3.hpp:17:20:HAL_StatusTypeDef SHTC3::SHTC3SendCommand(uint16_t)	1
+../Core/Inc/SHTC3.hpp:27:20:HAL_StatusTypeDef SHTC3::SHTC3ReadID(uint16_t*)	4
+../Core/Inc/SHTC3.hpp:46:10:uint8_t SHTC3::SHTC3CalculateCRC(uint8_t*, uint8_t)	4
+../Core/Inc/SHTC3.hpp:65:7:bool SHTC3::SHTC3CheckCRC(uint8_t*, uint8_t, uint8_t)	1
+../Core/Inc/SHTC3.hpp:70:20:HAL_StatusTypeDef SHTC3::SHTC3Init()	8
+../Core/Inc/SHTC3.hpp:97:2:SHTC3::SHTC3(I2C_HandleTypeDef)	1
+../Core/Inc/SHTC3.hpp:103:23:HAL_StatusTypeDef SHTC3::getInitStatus()	1
+../Core/Inc/SHTC3.hpp:107:20:HAL_StatusTypeDef SHTC3::SHTC3ReadTempHumidity(float*, float*)	7
+../Core/Src/main.cpp:67:5:int main()	2
+../Core/Src/main.cpp:120:6:void SystemClock_Config()	3
+../Core/Src/main.cpp:157:13:void MX_I2C1_Init()	2
+../Core/Src/main.cpp:191:13:void MX_GPIO_Init()	1
+../Core/Src/main.cpp:224:6:void Error_Handler()	1
