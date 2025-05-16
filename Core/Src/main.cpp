@@ -100,12 +100,15 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+  // HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
   // SHTC3 shtc3(hi2c1);
 
   // if (shtc3.getInitStatus() != HAL_OK) {
   //   Error_Handler();
   // }
+  temperature = 21;
+  humidity = 50;
+  initUART();
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
@@ -118,7 +121,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     // shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
     sendSensorDataBinary(&temperature, &humidity);
-    updateState();
+    // updateState();
 
     switch (state)
     {
@@ -129,8 +132,9 @@ int main(void)
         default:
             break;
     }
-    HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
-    HAL_Delay(100);
+    // HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+    // HAL_Delay(100);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
   }
   /* USER CODE END 3 */
 }

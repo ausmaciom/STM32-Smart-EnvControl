@@ -21,15 +21,23 @@ typedef enum {
 // 全域變數宣告
 uint8_t rxBuffer[RX_BUFFER_SIZE];
 uint8_t receivedCMD[RX_BUFFER_SIZE];
-uint8_t iotCommand = 0;
-SystemState state = AUTO_MODE;
-bool commandReceived = false;
-bool uartTxComplete = false;
+uint8_t iotCommand;
+SystemState state;
+uint16_t commandReceived;
+bool uartTxComplete;
 
 // 函數宣告
 bool confirmState(void);
 void updateState(void);
 void sendSensorDataBinary(float *temperature, float *humidity);
+
+void initUART(void)
+{
+    uartTxComplete = true;
+    commandReceived = 0x1000;
+    state = AUTO_MODE;
+    iotCommand = 0;
+}
 
 uint16_t convertFloatToInt(float value)
 {
@@ -46,7 +54,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART1) 
 	{
     	memcpy(receivedCMD, rxBuffer, RX_BUFFER_SIZE);
-		commandReceived = true;
+		commandReceived = 0x1001;
     }
 }
 
@@ -73,11 +81,12 @@ void sendSensorDataBinary(float *temperature, float *humidity)
         uartTxComplete = false;
         HAL_UART_Transmit_DMA(&huart1, (uint8_t *)dataPacket, 8); // 3個Half-Word = 6個Byte
     }
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
 }
 
 bool confirmState(void)
 {
-    commandReceived = false;
+    commandReceived = 0x1000;
     uint8_t iotCount = 0, autoCount = 0;
 	for (uint8_t i = 0; i < RX_BUFFER_SIZE; i++)
 	{
