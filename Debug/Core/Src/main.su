@@ -6,8 +6,10 @@
 ../Core/Inc/SHTC3.hpp:97:2:SHTC3::SHTC3(I2C_HandleTypeDef)	16	static
 ../Core/Inc/SHTC3.hpp:103:23:HAL_StatusTypeDef SHTC3::getInitStatus()	16	static
 ../Core/Inc/SHTC3.hpp:107:20:HAL_StatusTypeDef SHTC3::SHTC3ReadTempHumidity(float*, float*)	48	static
-../Core/Src/main.cpp:67:5:int main()	176	static
-../Core/Src/main.cpp:120:6:void SystemClock_Config()	72	static
-../Core/Src/main.cpp:157:13:void MX_I2C1_Init()	8	static
-../Core/Src/main.cpp:191:13:void MX_GPIO_Init()	40	static
-../Core/Src/main.cpp:224:6:void Error_Handler()	8	static,ignoring_inline_asm
+../Core/Src/main.cpp:74:5:int main()	176	static
+../Core/Src/main.cpp:129:6:void SystemClock_Config()	72	static
+../Core/Src/main.cpp:165:13:void MX_I2C1_Init()	8	static
+../Core/Src/main.cpp:199:13:void MX_USART1_UART_Init()	8	static
+../Core/Src/main.cpp:235:13:void MX_DMA_Init()	16	static
+../Core/Src/main.cpp:255:13:void MX_GPIO_Init()	40	static
+../Core/Src/main.cpp:288:6:void Error_Handler()	8	static,ignoring_inline_asm
