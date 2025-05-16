@@ -63,7 +63,7 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float temperature, humidity;
+float temperature = 21, humidity = 50;
 uint16_t uartTemp, uartHumid;
 /* USER CODE END 0 */
 
@@ -100,13 +100,13 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  initUART();
-  SHTC3 shtc3(hi2c1);
+  HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+  // SHTC3 shtc3(hi2c1);
 
-  if (shtc3.getInitStatus() != HAL_OK) {
-    Error_Handler();
-  }
-
+  // if (shtc3.getInitStatus() != HAL_OK) {
+  //   Error_Handler();
+  // }
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,11 +116,21 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    updateState();
-	  shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
+    // shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
     sendSensorDataBinary(&temperature, &humidity);
-	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	  HAL_Delay(1000);
+    updateState();
+
+    switch (state)
+    {
+        case SystemState::IOT_MODE:
+            break;
+        case SystemState::AUTO_MODE:
+            break;
+        default:
+            break;
+    }
+    HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }

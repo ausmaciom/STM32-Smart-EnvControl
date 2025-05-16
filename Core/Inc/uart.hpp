@@ -24,11 +24,11 @@ uint8_t receivedCMD[RX_BUFFER_SIZE];
 uint8_t iotCommand = 0;
 SystemState state = AUTO_MODE;
 bool commandReceived = false;
+bool uartTxComplete = false;
 
 // 函數宣告
 bool confirmState(void);
 void updateState(void);
-void initUART(void);
 void sendSensorDataBinary(float *temperature, float *humidity);
 
 uint16_t convertFloatToInt(float value)
@@ -36,12 +36,9 @@ uint16_t convertFloatToInt(float value)
     return (uint16_t)(value * 10.0f);
 }
 
-bool isValidCommand(void)
+bool isValidMessage(void)
 {
-    if(receivedCMD[0] == 0xAA && receivedCMD[RX_BUFFER_SIZE-1] == 0xFF) {
-        return true;
-    }
-    return false;
+    return receivedCMD[0] == 0xAA && receivedCMD[RX_BUFFER_SIZE-1] == 0xFF;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -50,13 +47,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
     	memcpy(receivedCMD, rxBuffer, RX_BUFFER_SIZE);
 		commandReceived = true;
-        HAL_UART_Receive_DMA(&huart1, rxBuffer, sizeof(rxBuffer));
     }
 }
 
-void initUART(void)
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+    if (huart->Instance == USART1) {
+        uartTxComplete = true;
+    }
 }
 
 void sendSensorDataBinary(float *temperature, float *humidity) 
@@ -65,19 +63,22 @@ void sendSensorDataBinary(float *temperature, float *humidity)
 	uint16_t humi_int = convertFloatToInt(*humidity);
 
 	// 創建二進制數據包
-	static uint16_t dataPacket[3]; // 起始標記 + 溫度 + 濕度
+	static uint16_t dataPacket[4]; // 起始標記 + 溫度 + 濕度
 	dataPacket[0] = 0xAA55; // 起始標記
 	dataPacket[1] = temp_int;
 	dataPacket[2] = humi_int;
-
-	// 使用DMA發送數據
-	HAL_UART_Transmit_DMA(&huart1, (uint8_t*)dataPacket, 6); // 3個Half-Word = 6個Byte
+	dataPacket[3] = commandReceived;
+    // 使用DMA發送數據
+    if (uartTxComplete) {
+        uartTxComplete = false;
+        HAL_UART_Transmit_DMA(&huart1, (uint8_t *)dataPacket, 8); // 3個Half-Word = 6個Byte
+    }
 }
 
 bool confirmState(void)
 {
-	commandReceived = false;
-	uint8_t iotCount = 0, autoCount = 0;
+    commandReceived = false;
+    uint8_t iotCount = 0, autoCount = 0;
 	for (uint8_t i = 0; i < RX_BUFFER_SIZE; i++)
 	{
 		if (*(receivedCMD + i) == 0)
@@ -87,11 +88,11 @@ bool confirmState(void)
 		else
 			iotCommand = *(receivedCMD + i);
 	}
-	return autoCount > iotCount; // 負的auto, 正的iot
+	return autoCount > iotCount; // auto : 1 ; iot : 0
 }
 
 void updateState(void)
 {
-	if (isValidCommand())
-		state = confirmState();
+    if (isValidMessage())
+        state = confirmState() ? AUTO_MODE : IOT_MODE;
 }
