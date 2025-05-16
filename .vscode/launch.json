@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "./build/Debug/test1.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "stlink", // 使用你實際的除錯器類型
+            "device": "STM32F103C8T6",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceFolder}/STM32F103.svd" // 如果有SVD檔案
+        }
+    ]
+}
