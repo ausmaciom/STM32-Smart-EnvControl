@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define RX_BUFFER_SIZE 16
+#define RX_BUFFER_SIZE 4
 
 
 // 前向宣告
@@ -23,18 +23,20 @@ uint8_t rxBuffer[RX_BUFFER_SIZE];
 uint8_t receivedCMD[RX_BUFFER_SIZE];
 uint8_t iotCommand;
 SystemState state;
-uint16_t commandReceived;
+uint8_t commandReceived;
 bool uartTxComplete;
 
 // 函數宣告
 bool confirmState(void);
 void updateState(void);
 void sendSensorDataBinary(float *temperature, float *humidity);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
 void initUART(void)
 {
     uartTxComplete = true;
-    commandReceived = 0x1000;
+    commandReceived = 0x11;
     state = AUTO_MODE;
     iotCommand = 0;
 }
@@ -49,44 +51,33 @@ bool isValidMessage(void)
     return receivedCMD[0] == 0xAA && receivedCMD[RX_BUFFER_SIZE-1] == 0xFF;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1) 
-	{
-    	memcpy(receivedCMD, rxBuffer, RX_BUFFER_SIZE);
-		commandReceived = 0x1001;
-    }
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1) {
-        uartTxComplete = true;
-    }
-}
-
 void sendSensorDataBinary(float *temperature, float *humidity) 
 {
 	uint16_t temp_int = convertFloatToInt(*temperature);
 	uint16_t humi_int = convertFloatToInt(*humidity);
 
 	// 創建二進制數據包
-	static uint16_t dataPacket[4]; // 起始標記 + 溫度 + 濕度
-	dataPacket[0] = 0xAA55; // 起始標記
-	dataPacket[1] = temp_int;
-	dataPacket[2] = humi_int;
-	dataPacket[3] = commandReceived;
+    static uint8_t dataPacket[7]; // 起始標記 + 溫度 + 濕度
+    dataPacket[0] = 0x55;
+    dataPacket[1] = 0xAA;
+    dataPacket[2] = (uint8_t)(temp_int & 0xFF);
+    dataPacket[3] = (uint8_t)((temp_int >> 8) & 0xFF);
+    dataPacket[4] = (uint8_t)(humi_int & 0xFF);
+    dataPacket[5] = (uint8_t)((humi_int >> 8) & 0xFF);
+    dataPacket[6] = commandReceived;
+    commandReceived = 0x11;
     // 使用DMA發送數據
     if (uartTxComplete) {
         uartTxComplete = false;
-        HAL_UART_Transmit_DMA(&huart1, (uint8_t *)dataPacket, 8); // 3個Half-Word = 6個Byte
+        HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(&huart1, dataPacket, 7);
+        if (status != HAL_OK) {
+            uartTxComplete = true;                                 // 如果發送失敗，重置標誌
+        }
     }
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
 }
 
 bool confirmState(void)
 {
-    commandReceived = 0x1000;
     uint8_t iotCount = 0, autoCount = 0;
 	for (uint8_t i = 0; i < RX_BUFFER_SIZE; i++)
 	{
@@ -94,10 +85,11 @@ bool confirmState(void)
 			iotCount++;
 		else if (*(receivedCMD + i) == 1)
 			autoCount++;
-		else
-			iotCommand = *(receivedCMD + i);
+        else if (*(receivedCMD + i) != 0xAA && *(receivedCMD + i) != 0xFF)
+            iotCommand = *(receivedCMD + i);
 	}
-	return autoCount > iotCount; // auto : 1 ; iot : 0
+    receivedCMD[0] = 0;
+    return autoCount > iotCount; // auto : 1 ; iot : 0
 }
 
 void updateState(void)

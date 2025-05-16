@@ -63,7 +63,7 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float temperature = 21, humidity = 50;
+float temperature, humidity;
 uint16_t uartTemp, uartHumid;
 /* USER CODE END 0 */
 
@@ -100,14 +100,12 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  // HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
-  // SHTC3 shtc3(hi2c1);
+  HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+  SHTC3 shtc3(hi2c1);
 
-  // if (shtc3.getInitStatus() != HAL_OK) {
-  //   Error_Handler();
-  // }
-  temperature = 21;
-  humidity = 50;
+  if (shtc3.getInitStatus() != HAL_OK) {
+    Error_Handler();
+  }
   initUART();
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -119,22 +117,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    // shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
+    shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
     sendSensorDataBinary(&temperature, &humidity);
-    // updateState();
+    updateState();
 
     switch (state)
     {
         case SystemState::IOT_MODE:
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
             break;
         case SystemState::AUTO_MODE:
             break;
         default:
             break;
     }
-    // HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
-    // HAL_Delay(100);
+    HAL_UART_Receive_DMA(&huart1, rxBuffer, RX_BUFFER_SIZE);
+    HAL_Delay(200);
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
+
   }
   /* USER CODE END 3 */
 }
@@ -290,7 +290,20 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_2 */
 }
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        memcpy(receivedCMD, rxBuffer, RX_BUFFER_SIZE);
+        commandReceived = 0x22;
+    }
+}
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        uartTxComplete = true;
+    }
+}
 /* USER CODE END 4 */
 
 /**
