@@ -18,7 +18,20 @@
             "*.c++": "cpp",
             "*.cpp": "cpp",
             "*.cxx": "cpp",
-            "*.cc": "cpp"
+            "*.cc": "cpp",
+            "bit": "cpp",
+            "cmath": "cpp",
+            "compare": "cpp",
+            "concepts": "cpp",
+            "cstdarg": "cpp",
+            "cstdio": "cpp",
+            "cstdlib": "cpp",
+            "exception": "cpp",
+            "type_traits": "cpp",
+            "limits": "cpp",
+            "new": "cpp",
+            "cstdint": "cpp",
+            "typeinfo": "cpp"
         },
         "[yaml]": {
             "editor.insertSpaces": true,
