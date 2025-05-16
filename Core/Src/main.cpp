@@ -22,7 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SHTC3.hpp"
-
+#include "uart.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +100,7 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  initUART();
   SHTC3 shtc3(hi2c1);
 
   if (shtc3.getInitStatus() != HAL_OK) {
@@ -116,7 +116,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    updateState();
 	  shtc3.SHTC3ReadTempHumidity(&temperature, &humidity);
+    sendSensorDataBinary(&temperature, &humidity);
 	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	  HAL_Delay(1000);
   }
