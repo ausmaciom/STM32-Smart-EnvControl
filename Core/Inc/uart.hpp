@@ -29,14 +29,14 @@ typedef struct{
 } timePacket;
 
 // 全域變數宣告
-uint8_t rxBuffer[TIME_BUFFER_SIZE];
-uint8_t Message[TIME_BUFFER_SIZE];
-uint8_t iotCommand;
-SystemState state;
 uint8_t commandReceived;
 bool uartTxComplete;
-uint8_t timeDemand;
-timePacket timeinfo;
+extern uint8_t Message[TIME_BUFFER_SIZE];
+extern uint8_t rxBuffer[TIME_BUFFER_SIZE];
+extern SystemState state;
+extern uint8_t iotCommand;
+extern uint8_t timeDemand;
+extern timePacket timeinfo;
 
 // 函數宣告
 bool confirmState(void);

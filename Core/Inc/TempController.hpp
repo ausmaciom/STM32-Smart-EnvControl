@@ -33,7 +33,7 @@ private:
         {MED_HEATING, WEAK_HEATING, COOLING},        // 正常
         {WEAK_HEATING, COOLING, COOLING}             // 熱
     };
-    float controlOutput[4]; // 控制輸出
+    const float controlOutput[4]; // 控制輸出
     float maxNightSafetyTemp; // 晚上安全溫度
     float maxDaySafetyTemp;   // 白天安全溫度
 
@@ -48,11 +48,10 @@ private:
     }
 
 public:
-    FuzzyController(float maxNightTemp, float maxDayTemp)
+    FuzzyController(float maxNightTemp, float maxDayTemp) : controlOutput{0, 25, 50, 100}
     {
         maxNightSafetyTemp = maxNightTemp;
         maxDaySafetyTemp   = maxDayTemp;
-        controlOutput = {0, 4, 8, 15};
     }
     struct ControlOutput
     {
@@ -72,12 +71,12 @@ public:
         // 檢查安全保護
         if (isDay)
         {
-            if (hotTemperature < maxDaySafetyTemp)
+            if (hotTemperature > maxDaySafetyTemp)
                 output.safetyTriggered = true;
         }
         else
         {
-            if (hotTemperature < maxNightSafetyTemp)
+            if (hotTemperature > maxNightSafetyTemp)
                 output.safetyTriggered = true;
         }
         return output;
@@ -89,8 +88,8 @@ class TempController
 private:
     FuzzyController fuzzyController;
     uint8_t currentDay;
-    timeStruct* timeptr;
-    uint8_t* needResetRTC;
+    timeStruct *const timeptr;
+    uint8_t *const needResetRTC;
     float hotTarget, coldTarget;
     bool isDay;
     void PWMSetDutyCycle(float duty_cycle)
@@ -104,15 +103,6 @@ private:
 
         // 設置新的占空比
         __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, pulse);
-    }
-    bool needResetRTC()
-    {
-        if (timeptr->date.Date != currentDay)
-        {
-            currentDay = timeptr->date.Date;
-            return true;
-        }
-        return false;
     }
     void switchTargetTemp()
     {
@@ -138,6 +128,14 @@ public:
         PWMSetDutyCycle(0); // 初始占空比為 0
         currentDay = time->date.Date;
         switchTargetTemp();
+    }
+    bool isneedResetRTC()
+    {
+        if (timeptr->date.Date != currentDay) {
+            currentDay = timeptr->date.Date;
+            return true;
+        }
+        return false;
     }
     void setDutyCycle(float coldTemp, float hotTemp)
     {

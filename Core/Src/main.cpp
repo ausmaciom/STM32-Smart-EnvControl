@@ -75,6 +75,12 @@ static void MX_I2C2_Init(void);
 float hotTemp = 0, hotHumid = 0;
 float coldTemp = 0, coldHumid = 0;
 timeStruct stm32Time = {0};
+SystemState state;
+uint8_t rxBuffer[TIME_BUFFER_SIZE];
+uint8_t Message[TIME_BUFFER_SIZE];
+uint8_t iotCommand;
+uint8_t timeDemand;
+timePacket timeinfo;
 /* USER CODE END 0 */
 
 /**
@@ -152,7 +158,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
-    coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldTemp);
+    coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldHumid);
     sendSensorDataBinary(&hotTemp, &hotHumid);
     updateState();
 
@@ -538,7 +544,6 @@ HAL_StatusTypeDef getRTCDateTime(void)
     RTC_TimeTypeDef gTime = {0};
     RTC_DateTypeDef gDate = {0};
 
-    HAL_stat
     // 讀取時間
     if(HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN) != HAL_OK) {
         return HAL_ERROR;
