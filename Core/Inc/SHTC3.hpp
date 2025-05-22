@@ -10,7 +10,7 @@
 
 class SHTC3 {
 private:
-	I2C_HandleTypeDef hi2c1;
+	I2C_HandleTypeDef *hi2c1;
 
 	HAL_StatusTypeDef init_status;
 
@@ -21,7 +21,7 @@ private:
 		cmd_buffer[0] = (cmd >> 8) & 0xFF;
 		cmd_buffer[1] = cmd & 0xFF;
 
-		return HAL_I2C_Master_Transmit(&hi2c1, (SHTC3_ADDR << 1), cmd_buffer, 2, 100);
+		return HAL_I2C_Master_Transmit(hi2c1, (SHTC3_ADDR << 1), cmd_buffer, 2, 100);
 	}
 
 	HAL_StatusTypeDef SHTC3ReadID(uint16_t *id)
@@ -32,7 +32,7 @@ private:
 		status = SHTC3SendCommand(SHTC3_CMD_READ_ID);
 		if (status != HAL_OK) return status;
 
-		status = HAL_I2C_Master_Receive(&hi2c1, (SHTC3_ADDR << 1) | 0x01, data, 3, 100);
+		status = HAL_I2C_Master_Receive(hi2c1, (SHTC3_ADDR << 1) | 0x01, data, 3, 100);
 		if (status != HAL_OK) return status;
 
 		if (!SHTC3CheckCRC(data, 2, data[2])) return HAL_ERROR;
@@ -94,7 +94,7 @@ private:
 	}
 
 public:
-	SHTC3(I2C_HandleTypeDef hi2c)
+	SHTC3(I2C_HandleTypeDef *hi2c)
 	{
 		this->hi2c1 = hi2c;
 		init_status = SHTC3Init();
@@ -119,7 +119,7 @@ public:
 		HAL_Delay(15);
 
 		// 讀取數據（6位元組：濕度+CRC, 溫度+CRC）
-		status = HAL_I2C_Master_Receive(&hi2c1, (SHTC3_ADDR << 1) | 0x01, data, 6, 100);
+		status = HAL_I2C_Master_Receive(hi2c1, (SHTC3_ADDR << 1) | 0x01, data, 6, 100);
 		if (status != HAL_OK) return status;
 
 		if(!SHTC3CheckCRC(&data[0], 2, data[2]) || !SHTC3CheckCRC(&data[3], 2, data[5])) {

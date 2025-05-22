@@ -159,7 +159,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
     coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldHumid);
-    sendSensorDataBinary(&hotTemp, &hotHumid);
+    sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
     updateState();
 
     switch (state)
