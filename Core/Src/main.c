@@ -21,10 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "SHTC3.hpp"
-#include "uart.hpp"
-#include "iostream"
-#include "TempController.hpp"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +52,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,9 +70,7 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float hotTemp = 0, hotHumid = 0;
-float coldTemp = 0, coldHumid = 0;
-timeStruct stm32Time = {0};
+
 /* USER CODE END 0 */
 
 /**
@@ -113,35 +109,7 @@ int main(void)
   MX_RTC_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_Delay(2000); // 延遲2秒以確保系統穩定
-  HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
-  SHTC3 hotSHT(hi2c1);
-  SHTC3 coldSHT(hi2c2);
-  
-  if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK) {
-      Error_Handler();
-  }
 
-  initUART();
-  sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-  HAL_Delay(500);
-  uint8_t waits = 0;
-  while (receiveTime() != HAL_OK) {
-      HAL_Delay(100);
-      waits++;
-      if (waits > 5) {
-          sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-          waits = 0;
-      }
-  }
-
-  if (resetRTCWithTimePacket(&timeinfo) != HAL_OK) {
-      Error_Handler();
-  }
-
-  TempController tempController(&stm32Time, &timeDemand, 26.0f, 30.0f);
-
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -151,29 +119,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
-    coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldTemp);
-    sendSensorDataBinary(&hotTemp, &hotHumid);
-    updateState();
-
-    switch (state)
-    {
-        case SystemState::IOT_MODE:
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
-            break;
-        case SystemState::AUTO_MODE:
-            tempController.setDutyCycle(coldTemp, hotTemp);
-            if (receiveTime() == HAL_OK) {
-                resetRTCWithTimePacket(&timeinfo);
-            }
-            break;
-        default:
-            break;
-    }
-
-    HAL_Delay(200);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
-
   }
   /* USER CODE END 3 */
 }
@@ -466,15 +411,15 @@ static void MX_DMA_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
 
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
@@ -486,91 +431,28 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
 
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1) {
-        if (timeDemand)
-          memcpy(Message, rxBuffer, TIME_BUFFER_SIZE);
-        else
-          memcpy(Message, rxBuffer, RX_BUFFER_SIZE);
-        commandReceived = 0x22;
-    }
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1) {
-        uartTxComplete = true;
-    }
-}
-HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time)
-{
-    RTC_TimeTypeDef sTime = {0};
-    RTC_DateTypeDef sDate = {0};
-    HAL_StatusTypeDef status;
-
-    // 設定時間
-    sTime.Hours   = time->hour;
-    sTime.Minutes = time->minute;
-    sTime.Seconds = time->second;
-
-    status = HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-    if (status != HAL_OK) {
-        return status;
-    }
-    // 設定日期
-    sDate.Year    = time->year; // RTC 支援後兩位年份
-    sDate.Month   = time->month;
-    sDate.Date    = time->day;
-    sDate.WeekDay = time->weekday;
-
-    status = HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-    return status;
-}
-HAL_StatusTypeDef getRTCDateTime(void)
-{
-    RTC_TimeTypeDef gTime = {0};
-    RTC_DateTypeDef gDate = {0};
-
-    HAL_stat
-    // 讀取時間
-    if(HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN) != HAL_OK) {
-        return HAL_ERROR;
-    }
-    if(HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN) != HAL_OK) {
-        return HAL_ERROR;
-    }
-    stm32Time.time.Hours = gTime.Hours;
-    stm32Time.time.Minutes = gTime.Minutes;
-    stm32Time.time.Seconds = gTime.Seconds;
-    stm32Time.date.Year = gDate.Year;
-    stm32Time.date.Month = gDate.Month;
-    stm32Time.date.Date = gDate.Date;
-    return HAL_OK;
-}
 
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
-    /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
-    __disable_irq();
-    while (1) {
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-        HAL_Delay(100);
-    }
-    /* USER CODE END Error_Handler_Debug */
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
