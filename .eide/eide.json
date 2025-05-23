@@ -55,23 +55,6 @@
           "proType": 1,
           "speed": 8000,
           "otherCmds": ""
-        },
-        "STLink": {
-          "bin": "",
-          "proType": "SWD",
-          "resetMode": "default",
-          "runAfterProgram": true,
-          "speed": "1400",
-          "address": "0x08000000",
-          "elFile": "None",
-          "optionBytes": ".eide/debug.st.option.bytes.ini",
-          "otherCmds": ""
-        },
-        "OpenOCD": {
-          "bin": "",
-          "target": "stm32f1x",
-          "interface": "stlink",
-          "baseAddr": "0x08000000"
         }
       },
       "custom_dep": {
@@ -97,15 +80,18 @@
           "afterBuildTasks": [],
           "global": {
             "$float-abi-type": "softfp",
-            "output-debug-info": "enable"
+            "output-debug-info": "enable",
+            "misc-control": []
           },
           "c/cpp-compiler": {
-            "language-c": "gnu11",
-            "language-cpp": "gnu++14",
+            "language-c": "c11",
+            "language-cpp": "c++11",
             "optimization": "level-debug",
             "warnings": "all-warnings",
             "one-elf-section-per-function": true,
-            "one-elf-section-per-data": true
+            "one-elf-section-per-data": true,
+            "C_FLAGS": "",
+            "CXX_FLAGS": ""
           },
           "asm-compiler": {
             "ASM_FLAGS": "-DDEBUG"
@@ -114,8 +100,7 @@
             "output-format": "elf",
             "remove-unused-input-sections": true,
             "LD_FLAGS": "-TSTM32F103C8TX_FLASH.ld",
-            "$toolName": "auto",
-            "LIB_FLAGS": "-lc -lm -lnosys"
+            "LIB_FLAGS": ""
           }
         }
       }

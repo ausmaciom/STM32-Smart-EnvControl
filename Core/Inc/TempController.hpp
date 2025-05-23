@@ -1,7 +1,6 @@
 #pragma once
 
 #include "main.h"
-#include "tim.h"
 #include "uart.hpp"
 
 typedef struct {
@@ -81,7 +80,7 @@ public:
         }
         return output;
     }
-}
+};
 
 class TempController
 {
@@ -150,7 +149,7 @@ public:
             PWMSetDutyCycle(output.dutyCycle);
         }
     }
-}
+};
 
 
 

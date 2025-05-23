@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include "SHTC3.hpp"
 #include "uart.hpp"
-#include "iostream"
 #include "TempController.hpp"
 /* USER CODE END Includes */
 
@@ -39,7 +38,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time);
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -67,7 +66,6 @@ static void MX_TIM2_Init(void);
 static void MX_RTC_Init(void);
 static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -121,8 +119,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_Delay(2000); // 延遲2秒以確保系統穩定
   HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
-  SHTC3 hotSHT(hi2c1);
-  SHTC3 coldSHT(hi2c2);
+  SHTC3 hotSHT(&hi2c1);
+  SHTC3 coldSHT(&hi2c2);
   
   if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK) {
       Error_Handler();

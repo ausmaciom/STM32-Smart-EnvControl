@@ -81,7 +81,7 @@ void sendSensorDataBinary(float *temperature, float *humidity, uint8_t *timeDema
     dataPacket[4] = (uint8_t)(humi_int & 0xFF);
     dataPacket[5] = (uint8_t)((humi_int >> 8) & 0xFF);
     dataPacket[6] = commandReceived;
-    dataPacket[7] = timeDemand;
+    dataPacket[7] = *timeDemand;
     commandReceived = 0x11;
     // 使用DMA發送數據
     if (uartTxComplete) {
