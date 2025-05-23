@@ -39,6 +39,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time);
+HAL_StatusTypeDef getRTCDateTime(void);
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -105,81 +106,78 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+    /* USER CODE END SysInit */
 
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_I2C1_Init();
-  MX_USART1_UART_Init();
-  MX_TIM2_Init();
-  MX_RTC_Init();
-  MX_I2C2_Init();
-  /* USER CODE BEGIN 2 */
-  HAL_Delay(2000); // 延遲2秒以確保系統穩定
-  HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
-  SHTC3 hotSHT(&hi2c1);
-  SHTC3 coldSHT(&hi2c2);
-  
-  if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK) {
-      Error_Handler();
-  }
-
-  initUART();
-  sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-  HAL_Delay(500);
-  uint8_t waits = 0;
-  while (receiveTime() != HAL_OK) {
-      HAL_Delay(100);
-      waits++;
-      if (waits > 5) {
-          sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-          waits = 0;
-      }
-  }
-
-  if (resetRTCWithTimePacket(&timeinfo) != HAL_OK) {
-      Error_Handler();
-  }
-
-  TempController tempController(&stm32Time, &timeDemand, 26.0f, 30.0f);
-
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-    hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
-    coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldHumid);
-    sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-    updateState();
-
-    switch (state)
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_DMA_Init();
+    MX_I2C1_Init();
+    MX_USART1_UART_Init();
+    MX_TIM2_Init();
+    MX_RTC_Init();
+    MX_I2C2_Init();
+    /* USER CODE BEGIN 2 */
+    HAL_Delay(2000); // 延遲2秒以確保系統穩定
+    HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
+    SHTC3 hotSHT(&hi2c1);
+    // SHTC3 coldSHT(&hi2c2);
+    if (hotSHT.getInitStatus() != HAL_OK)
+    // if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK)
     {
-        case SystemState::IOT_MODE:
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
-            break;
-        case SystemState::AUTO_MODE:
-            tempController.setDutyCycle(coldTemp, hotTemp);
-            if (receiveTime() == HAL_OK) {
-                resetRTCWithTimePacket(&timeinfo);
-            }
-            break;
-        default:
-            break;
+        // Error_Handler();
     }
 
-    HAL_Delay(200);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
+    initUART();
+    sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
+    HAL_Delay(500);
+    uint8_t waits = 0;
+    while (receiveTime() != HAL_OK) {
+        HAL_Delay(100);
+        waits++;
+        if (waits > 5) {
+            sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
+            waits = 0;
+        }
+    }
 
-  }
-  /* USER CODE END 3 */
+    if (resetRTCWithTimePacket(&timeinfo) != HAL_OK) {
+        Error_Handler();
+    }
+
+    TempController tempController(&stm32Time, &timeDemand, 26.0f, 30.0f);
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+    /* USER CODE END 2 */
+
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1) {
+        /* USER CODE END WHILE */
+
+        /* USER CODE BEGIN 3 */
+        hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
+        // coldSHT.SHTC3ReadTempHumidity(&coldTemp, &coldHumid);
+        sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
+        updateState();
+        getRTCDateTime();
+        switch (state) {
+            case SystemState::IOT_MODE:
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
+                break;
+            case SystemState::AUTO_MODE:
+                tempController.setDutyCycle(coldTemp, hotTemp);
+                if (receiveTime() == HAL_OK) {
+                    resetRTCWithTimePacket(&timeinfo);
+                }
+                break;
+            default:
+                break;
+        }
+
+        HAL_Delay(200);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
+    }
+    /* USER CODE END 3 */
 }
 
 /**

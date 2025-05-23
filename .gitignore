@@ -13,3 +13,6 @@
 *.ept
 *.eide-template
 eide.json
+
+# vscode
+.vscode/

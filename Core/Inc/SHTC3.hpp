@@ -76,10 +76,10 @@ private:
 	    while(retries--) {
 			status = SHTC3SendCommand(SHTC3_CMD_WAKEUP);
 	        if (status == HAL_OK) break;
-			HAL_Delay(10);
+			HAL_Delay(15);
 	    }
 		if (status != HAL_OK) return status;
-		HAL_Delay(1);
+		HAL_Delay(10);
 
 		status = SHTC3ReadID(&id);
 		if (status != HAL_OK) return status;
@@ -88,7 +88,7 @@ private:
 
 		status = SHTC3SendCommand(SHTC3_CMD_RESET);
 		if (status != HAL_OK) return status;
-		HAL_Delay(10);
+		HAL_Delay(15);
 		
 		return HAL_OK;
 	}

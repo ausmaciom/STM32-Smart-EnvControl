@@ -40,7 +40,7 @@
         "runAfterProgram": true,
         "speed": 4000,
         "address": "0x08000000",
-        "elFile": "None",
+        "elFile": "./build/Debug/test1.hex",
         "optionBytes": ".eide/debug.st.option.bytes.ini",
         "otherCmds": ""
       },
