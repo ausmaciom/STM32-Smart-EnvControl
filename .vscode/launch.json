@@ -11,7 +11,9 @@
             "device": "STM32F103C8T6",
             "interface": "swd",
             "gdbPath": "/usr/bin/gdb-multiarch",
-            "serverpath": "/usr/local/bin/st-util"
+            "serverpath": "/usr/local/bin/st-util",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceFolder}/STM32F103.svd" // 如果有SVD檔案
         }
     ]
 }
