@@ -22,7 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SHTC3.hpp"
-#include "uart.hpp"
+#include "uart.h"
 #include "TempController.hpp"
 /* USER CODE END Includes */
 
@@ -38,8 +38,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time);
-HAL_StatusTypeDef getRTCDateTime(void);
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -71,32 +70,17 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float hotTemp = 0, hotHumid = 0;
-float coldTemp = 0, coldHumid = 0;
+float g_hotTemp = 0, g_hotHumid = 0;
+float g_coldTemp = 0, g_coldHumid = 0;
+CommStatus g_commStatus;
 timeStruct stm32Time = {0};
-SystemState state;
-uint8_t rxBuffer[TIME_BUFFER_SIZE];
-uint8_t Message[TIME_BUFFER_SIZE];
-uint8_t iotCommand;
-uint8_t timeDemand;
-timePacket timeinfo;
-void testGPIO()
-{
-    // 暫時將PB6設定為普通輸出
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin              = GPIO_PIN_6; // SCL腳位
-    GPIO_InitStruct.Mode             = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull             = GPIO_NOPULL;
-    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    while (1) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // 3.3V
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // 0V
-        HAL_Delay(100);
-    }
-}
+uint8_t g_rxBuffer[TIME_BUFFER_SIZE];
+uint8_t g_iotCommand;
+uint8_t g_timeDemand;
+timePacket g_timeinfo;
+SensorPacket g_txBuffer;
+SHTC3 hotSHT(&hi2c1); // 熱端感測器
+SHTC3 coldSHT(&hi2c2); // 冷端感測器
 /* USER CODE END 0 */
 
 /**
@@ -140,18 +124,9 @@ int main(void)
     /* USER CODE BEGIN 2 */
     HAL_Delay(1000);
     // testGPIO();
-    HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
-    SHTC3 hotSHT(&hi2c1);
-    // SHTC3 coldSHT(&hi2c2);
-    if (hotSHT.getInitStatus() != HAL_OK)
-    // if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK)
-    {
-        Error_Handler();
-    }
 
     initUART();
     sendSensorDataBinary(&hotTemp, &hotHumid, &timeDemand);
-    HAL_Delay(500);
     uint8_t waits = 0;
     while (receiveTime() != HAL_OK) {
         HAL_Delay(100);
@@ -526,21 +501,34 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void testGPIO()
 {
-    if (huart->Instance == USART1) {
-        if (timeDemand)
-          memcpy(Message, rxBuffer, TIME_BUFFER_SIZE);
-        else
-          memcpy(Message, rxBuffer, RX_BUFFER_SIZE);
-        commandReceived = 0x22;
+    // 暫時將PB6設定為普通輸出
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin              = GPIO_PIN_6; // SCL腳位
+    GPIO_InitStruct.Mode             = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull             = GPIO_NOPULL;
+    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    while (1) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // 3.3V
+        HAL_Delay(100);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // 0V
+        HAL_Delay(100);
     }
 }
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        uartTxComplete = true;
+        size_t timePacketSize = timeDemand ? TIME_BUFFER_SIZE : RX_BUFFER_SIZE;
+        memcpy(g_message, rxBuffer, timePacketSize);
+    }
+}
+extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        g_uartReady = true; // 傳輸完成，重置標誌為 true
     }
 }
 HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time)

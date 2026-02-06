@@ -54,6 +54,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+HAL_StatusTypeDef resetRTCWithTimePacket(timePacket *time);
+HAL_StatusTypeDef getRTCDateTime(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
