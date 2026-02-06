@@ -80,6 +80,23 @@ uint8_t Message[TIME_BUFFER_SIZE];
 uint8_t iotCommand;
 uint8_t timeDemand;
 timePacket timeinfo;
+void testGPIO()
+{
+    // 暫時將PB6設定為普通輸出
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin              = GPIO_PIN_6; // SCL腳位
+    GPIO_InitStruct.Mode             = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull             = GPIO_NOPULL;
+    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    while (1) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // 3.3V
+        HAL_Delay(100);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // 0V
+        HAL_Delay(100);
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -90,7 +107,11 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+#ifdef DEBUG
+  DBGMCU->CR |= DBGMCU_CR_DBG_TIM1_STOP;
+  //DBGMCU->CR |= DBGMCU_CR_DBG_WWDG_STOP;
+  //DBGMCU->CR |= DBGMCU_CR_DBG_IWDG_STOP;
+#endif
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -113,18 +134,19 @@ int main(void)
     MX_DMA_Init();
     MX_I2C1_Init();
     MX_USART1_UART_Init();
-    MX_TIM2_Init();
     MX_RTC_Init();
     MX_I2C2_Init();
+    MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
-    HAL_Delay(2000); // 延遲2秒以確保系統穩定
+    HAL_Delay(1000);
+    // testGPIO();
     HAL_UART_Receive_DMA(&huart1, rxBuffer, TIME_BUFFER_SIZE);
     SHTC3 hotSHT(&hi2c1);
     // SHTC3 coldSHT(&hi2c2);
     if (hotSHT.getInitStatus() != HAL_OK)
     // if (hotSHT.getInitStatus() != HAL_OK || coldSHT.getInitStatus() != HAL_OK)
     {
-        // Error_Handler();
+        Error_Handler();
     }
 
     initUART();
@@ -173,7 +195,7 @@ int main(void)
             default:
                 break;
         }
-
+        
         HAL_Delay(200);
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
     }
@@ -481,12 +503,22 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 

@@ -75,7 +75,8 @@
             "editor.insertSpaces": true,
             "editor.tabSize": 4,
             "editor.autoIndent": "advanced"
-        }
+        },
+        "commentTranslate.hover.enabled": false
     },
     "extensions": {
         "recommendations": [

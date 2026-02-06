@@ -72,14 +72,14 @@ private:
 		HAL_StatusTypeDef status;
 		uint16_t id = 0;
 		uint8_t retries = 3;
-		
-	    while(retries--) {
-			status = SHTC3SendCommand(SHTC3_CMD_WAKEUP);
+
+        while (true) {
+            status = SHTC3SendCommand(SHTC3_CMD_WAKEUP);
 	        if (status == HAL_OK) break;
-			HAL_Delay(15);
-	    }
-		if (status != HAL_OK) return status;
-		HAL_Delay(10);
+			HAL_Delay(500);
+        }
+        if (status != HAL_OK) return status;
+        HAL_Delay(300);
 
 		status = SHTC3ReadID(&id);
 		if (status != HAL_OK) return status;
@@ -88,7 +88,7 @@ private:
 
 		status = SHTC3SendCommand(SHTC3_CMD_RESET);
 		if (status != HAL_OK) return status;
-		HAL_Delay(15);
+		HAL_Delay(300);
 		
 		return HAL_OK;
 	}
@@ -112,11 +112,11 @@ public:
 
 		status = SHTC3SendCommand(SHTC3_CMD_WAKEUP);
 		if (status != HAL_OK) return status;
-		HAL_Delay(1);
+		HAL_Delay(300);
 
 		status = SHTC3SendCommand(SHTC3_CMD_MEAS_TEMP);
 		if (status != HAL_OK) return status;
-		HAL_Delay(15);
+		HAL_Delay(300);
 
 		// 讀取數據（6位元組：濕度+CRC, 溫度+CRC）
 		status = HAL_I2C_Master_Receive(hi2c1, (SHTC3_ADDR << 1) | 0x01, data, 6, 100);
