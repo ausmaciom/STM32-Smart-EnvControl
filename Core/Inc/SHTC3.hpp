@@ -18,8 +18,7 @@ private:
 	HAL_StatusTypeDef readID(uint16_t *id);
 	uint8_t calculateCRC(uint8_t *data, uint8_t len);
 	bool checkCRC(uint8_t *data, uint8_t len, uint8_t checksum);
-	HAL_StatusTypeDef init(void);
-
+    float temperature, humidity;
 public:
     static constexpr uint8_t SHTC3_ADDR           = 0x70;
     static constexpr uint16_t SHTC3_CMD_READ_ID   = 0xEFC8;
@@ -30,6 +29,8 @@ public:
     static constexpr uint16_t SHTC3_CMD_MEAS_MUD  = 0x7866;
     SHTC3(I2C_HandleTypeDef *hi2c);
     HAL_StatusTypeDef begin();
-	HAL_StatusTypeDef readTempHumidity(float *temperature, float *humidity);
+	HAL_StatusTypeDef readTempHumidity();
+    float getTemperature() const;
+    float getHumidity() const;
 };
 

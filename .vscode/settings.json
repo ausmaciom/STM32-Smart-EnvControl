@@ -1,3 +1,21 @@
 {
-    "C_Cpp.default.configurationProvider": "cl.eide"
+    "C_Cpp.default.configurationProvider": "cl.eide",
+    "C_Cpp.default.intelliSenseMode": "windows-gcc-arm",
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.codeAnalysis.clangTidy.args": [
+        // "--target=arm-none-eabi",
+        // "-mthumb",
+        // "-mcpu=cortex-m3",
+        // "-DSTM32F103xB",
+        // "-D__GNUC__=12",
+        // "-I${workspaceFolder}/Core/Inc",
+        // "-I${workspaceFolder}/Drivers/CMSIS/Include",
+        // "-I${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc"
+    ],
+    // // 指向 EIDE 真正產生的位置
+    // "C_Cpp.default.compileCommands": "${workspaceFolder}/build/Release/compile_commands.json",
+    
+    // // 確保分析器開啟
+    // "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    // "C_Cpp.codeAnalysis.runAutomatically": true,
 }

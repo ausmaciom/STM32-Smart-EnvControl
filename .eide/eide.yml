@@ -109,25 +109,21 @@ targets:
         options:
           version: 5
           afterBuildTasks: []
-          asm-compiler:
-            ASM_FLAGS: ""
+          asm-compiler: {}
           beforeBuildTasks: []
           c/cpp-compiler:
-            CXX_FLAGS: ""
-            C_FLAGS: ""
-            language-c: c11
-            language-cpp: c++11
+            language-c: gnu17
+            language-cpp: gnu++17
             one-elf-section-per-data: true
             one-elf-section-per-function: true
-            optimization: level-debug
+            optimization: level-size
             warnings: all-warnings
           global:
             $float-abi-type: softfp
-            misc-control: []
+            arm-thumb-mode: thumb
             output-debug-info: enable
           linker:
-            LD_FLAGS: ""
-            LIB_FLAGS: ""
+            $toolName: auto
             output-format: elf
             remove-unused-input-sections: true
         scatterFilePath: STM32F103C8TX_FLASH.ld

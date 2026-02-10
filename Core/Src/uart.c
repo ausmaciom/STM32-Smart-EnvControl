@@ -55,3 +55,18 @@ HAL_StatusTypeDef receiveTime()
     }
     return HAL_ERROR;
 }
+
+extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        size_t timePacketSize = timeDemand ? TIME_BUFFER_SIZE : RX_BUFFER_SIZE;
+        memcpy(localRxBuffer, rxBuffer, timePacketSize);
+    }
+}
+
+extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        g_uartReady = true; // 傳輸完成，重置標誌為 true
+    }
+}

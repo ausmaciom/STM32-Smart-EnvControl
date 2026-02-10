@@ -10,11 +10,16 @@
 extern UART_HandleTypeDef huart1;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
-extern uint8_t g_rxBuffer[TIME_BUFFER_SIZE];
+
+// 本作用域變數
+static uint8_t rxBuffer[TIME_BUFFER_SIZE];
+static uint8_t localRxBuffer[TIME_BUFFER_SIZE];
+static SensorPacket txBuffer;
+static bool g_uartReady;
+
 extern uint8_t g_iotCommand;
 extern uint8_t g_timeDemand;
 extern timePacket g_timeinfo;
-extern SensorPacket g_txBuffer;
 
 #pragma pack(push, 1)
 typedef struct{
@@ -43,9 +48,6 @@ enum class CommStatus : uint8_t {
     IDLE    = 0x11,
     RECEIVED = 0x22
 }
-
-// 全域變數宣告
-volatile bool g_uartReady;
 
 // 函數宣告
 void sendSensorDataBinary();

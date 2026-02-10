@@ -59,7 +59,7 @@ bool SHTC3::checkCRC(uint8_t *data, uint8_t len, uint8_t checksum)
 	return (calculateCRC(data, len) == checksum);
 }
 
-HAL_StatusTypeDef SHTC3::init(void)
+HAL_StatusTypeDef SHTC3::begin(void)
 {
 	HAL_StatusTypeDef status;
 	uint16_t id = 0;
@@ -86,16 +86,11 @@ HAL_StatusTypeDef SHTC3::init(void)
 	return HAL_OK;
 }
 
-SHTC3::SHTC3(I2C_HandleTypeDef *hi2c) : hi2c1_(hi2c)
+SHTC3::SHTC3(I2C_HandleTypeDef *hi2c) : hi2c1_(hi2c), temperature(0.0f), humidity(0.0f)
 {
 }
 
-HAL_StatusTypeDef SHTC3::begin()
-{
-    return init();
-}
-
-HAL_StatusTypeDef SHTC3::readTempHumidity(float *temperature, float *humidity)
+HAL_StatusTypeDef SHTC3::readTempHumidity()
 {
 	HAL_StatusTypeDef status;
 	uint8_t data[6];
@@ -120,11 +115,17 @@ HAL_StatusTypeDef SHTC3::readTempHumidity(float *temperature, float *humidity)
 	rawHumid = ((uint16_t)data[0] << 8) | data[1];
 	rawTemp = ((uint16_t)data[3] << 8) | data[4];
 
-	*humidity = 100.0f * ((float)rawHumid / 65535.0f);  // 轉換為相對濕度百分比
-	*temperature = -45.0f + 175.0f * ((float)rawTemp / 65535.0f);  // 轉換為攝氏度
+	humidity = 100.0f * ((float)rawHumid / 65535.0f);  // 轉換為相對濕度百分比
+	temperature = -45.0f + 175.0f * ((float)rawTemp / 65535.0f);  // 轉換為攝氏度
 
 	sendCommand(SHTC3_CMD_SLEEP);
 
 	return HAL_OK;
 }
 
+float SHTC3::getTemperature() const {
+    return temperature;
+}
+float SHTC3::getHumidity() const {
+	return humidity;
+}
