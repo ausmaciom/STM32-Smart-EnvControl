@@ -5,7 +5,7 @@ void initUART(void)
     g_commStatus = CommStatus::IDLE;
     txBuffer.startMarker = 0xAA;
     txBuffer.ackStatus   = (uint8_t)CommStatus::IDLE;
-    g_uartReady            = true;
+    g_uartReady            = 1;
 }
 
 static uint16_t convertFloatToInt(float value)
@@ -13,9 +13,9 @@ static uint16_t convertFloatToInt(float value)
     return (uint16_t)(value * 10.0f);
 }
 
-void sendSensorDataBinary(uint8_t)
+void sendSensorDataBinary()
 {
-    if (!g_uartReady) return;
+    if (g_uartReady != 1) return;
 
     txBuffer.hotTemp = convertFloatToInt(g_hotTemp);
     txBuffer.hotHumid = convertFloatToInt(g_hotHumid);
@@ -24,9 +24,9 @@ void sendSensorDataBinary(uint8_t)
     txBuffer.ackStatus = (uint8_t)g_commStatus;
 
     if (HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&g_txBuffer, sizeof(g_txBuffer)) == HAL_OK) {
-        g_uartReady = false; // 傳輸開始，設置標誌為 false
+        g_uartReady = 1; // 傳輸開始，設置標誌為 false
     } else {
-        g_uartReady = true; // 傳輸失敗，保持標誌為 true
+        g_uartReady = 0; // 傳輸失敗，保持標誌為 true
     }
 }
 

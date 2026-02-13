@@ -9,3 +9,9 @@
     1. timeController wip. 用於更新rtc和封裝時間相關函式
 1.28.1:
     TODO: 將Humidifier實做完成, uart, timeController優化
+1.29:
+    1. Humidifier 實作完成, 已實現功能如下:
+        i. 加濕之間有冷卻間隔
+        ii. 每次加濕5秒
+        iii. 每小時有加濕上限 (或許可以用冷卻間隔替代)
+    2. 簡易main.cpp 實現, 透過濕度檢測, 控制是否加濕

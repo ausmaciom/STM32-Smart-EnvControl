@@ -7,42 +7,51 @@
     * @attention
     *
 */
-Humidifier::HumidifierHumidifier(uint8_t currentHour_) : currentHour(currentHour_), humidifyTimes(0), needHumidify(false)
-                                                                                                        now(0),
-                                                       start(0), isRunning(false)
+Humidifier::Humidifier() : humidifyTimes_(0), needHumidify_(false), start_(0), isRunning_(false), end_(0)
 {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
 }
-bool Humidifier::startHumidify(uint8_t currentHour_)
+
+void Humidifier::begin(GPIO_TypeDef *port, uint16_t pin, uint8_t initialHour)
 {
-    if (currentHour != currentHour_) {
-        currentHour   = currentHour_;
-        humidifyTimes = 0;
-    }
-    if (humidifyTimes < 4 && !isRunning) {
-        needHumidify = true;
-        humidifyTimes++;
-        return true;
-    }
-    return false;
+    port_ = port;
+    pin_ = pin;
+    currentHour_ = initialHour;
+    end_         = HAL_GetTick() - HUMIDIFY_INTERVAL;
+    HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_SET);
 }
-void Humidifier::updateHumidify()
+void Humidifier::updateState(uint8_t currentHour)
 {
-    if (!needHumidify) {
-        return;
+    if (currentHour_ != currentHour) {
+        currentHour_   = currentHour;
+        humidifyTimes_ = 0;
     }
-
-    if (!isRunning) {
-        start     = HAL_GetTick();
-        isRunning = true;
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
+    if (humidifyTimes_ < MAX_TIMES_PER_HOUR && !isRunning_) {
+        needHumidify_ = true;
     }
-
+}
+void Humidifier::humidify()
+{
+    if (!needHumidify_ && !isRunning_) return;
     uint32_t now = HAL_GetTick();
-    if (now - start >= 5000) {
-        start        = 0;
-        isRunning    = false;
-        needHumidify = false;
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+
+    if (needHumidify_ && !isRunning_) {
+        if (now - end_ >= HUMIDIFY_INTERVAL) { // 冷卻檢查
+            start_        = now;
+            isRunning_    = true;
+            needHumidify_ = false;
+            humidifyTimes_++;
+            HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_RESET);
+            
+        } else {
+            needHumidify_ = false;
+        }
+    }
+
+    if (isRunning_) {
+        if (now - start_ >= HUMIDIFY_DURATION) {
+            isRunning_ = false;
+            end_ = now;
+            HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_SET);
+        }
     }
 }

@@ -15,13 +15,13 @@ private:
     State state_;
     bool needResetRTC_;
     int32_t lastSyncTick;
-    uint8_t* timeDemand_;
-    
-    HAL_StatusTypeDef resetRTCWithTimePacket(timePacket* time);
+    uint8_t lastResetDate_;
 
 public:
-    TimeController(uint8_t* timeDemand);
-    void updateSystem(timePacket* time);
+    TimeController();
+    void manageCalibrationCycle();
+    void updateSystem(TimePacket* time);
     RTC_TimeTypeDef getCurrentTime();
+    HAL_StatusTypeDef resetRTCWithTimePacket(TimePacket *time);
 };
 

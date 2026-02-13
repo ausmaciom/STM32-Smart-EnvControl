@@ -22,7 +22,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "SHTC3.hpp"
-#include "uart.h"
+// #include "uart.h"
+#include "humidifier.hpp"
+#include "TimeController.hpp"
 // #include "TempController.hpp"
 /* USER CODE END Includes */
 
@@ -70,10 +72,17 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-CommStatus g_commStatus
-
+float g_hotTemp = 0.0;
+float g_hotHumid = 0.0;
+float g_coldTemp = 0.0;
+float g_coldHumid = 0.0;
+// CommStatus g_commStatus;
+Humidifier humidifier;
 SHTC3 hotSHT(&hi2c1);  // 熱端感測器
-SHTC3 coldSHT(&hi2c2); // 冷端感測器
+TimeController timeController;
+// SHTC3 coldSHT(&hi2c2); // 冷端感測器
+bool initialize = false;
+bool flag = false;
 /* USER CODE END 0 */
 
 /**
@@ -115,15 +124,8 @@ int main(void)
     MX_I2C2_Init();
     MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-
-    initUART();
-
-    if (resetRTCWithTimePacket(&timeinfo) != HAL_OK) {
-        Error_Handler();
-    }
-    HAL_Delay(100);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+    // initUART();
+    // HAL_Delay(100);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -132,27 +134,40 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        hotSHT.SHTC3ReadTempHumidity(&hotTemp, &hotHumid);
-        coldSHT.SHTC3ReadTempHumidity(&g_coldTemp, &coldHumid);
-        sendSensorDataBinary();
-        updateState();
-        getRTCDateTime();
-        switch (state) {
-            case SystemState::IOT_MODE:
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED開
-                break;
-            case SystemState::AUTO_MODE:
-                tempController.setDutyCycle(coldTemp, hotTemp);
-                if (receiveTime() == HAL_OK) {
-                    resetRTCWithTimePacket(&timeinfo);
-                }
-                break;
-            default:
-                break;
+        if (!initialize) {
+            initialize = true;
+            TimePacket timeinfo = {
+                .year    = 26,
+                .month   = 2,
+                .day     = 13,
+                .hour    = 12,
+                .minute  = 0,
+                .second  = 0,
+                .weekday = 5
+            };
+            timeController.resetRTCWithTimePacket(&timeinfo);
+            humidifier.begin(GPIOB, GPIO_PIN_15, 12);
+            if (hotSHT.begin() != HAL_OK) {
+                Error_Handler();
+            }
+        }
+        if (hotSHT.readTempHumidity() != HAL_OK) {
+            Error_Handler();
+        }
+        g_hotHumid = hotSHT.getHumidity();
+        g_hotTemp = hotSHT.getTemperature();
+        RTC_TimeTypeDef currentTime = timeController.getCurrentTime();
+        if (g_hotHumid < 80.0f) {
+            humidifier.updateState(currentTime.Hours);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
         }
 
-        HAL_Delay(200);
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED開
+        humidifier.humidify();
+        HAL_Delay(1000);
     }
     /* USER CODE END 3 */
 }
@@ -449,7 +464,7 @@ static void MX_GPIO_Init(void)
 
     /*Configure GPIO pin : PB15 */
     GPIO_InitStruct.Pin   = GPIO_PIN_15;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStruct.Pull  = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -478,28 +493,6 @@ void testGPIO()
     }
 }
 
-
-HAL_StatusTypeDef getRTCDateTime(void)
-{
-    RTC_TimeTypeDef gTime = {0};
-    RTC_DateTypeDef gDate = {0};
-
-    // 讀取時間
-    if (HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN) != HAL_OK) {
-        return HAL_ERROR;
-    }
-    if (HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN) != HAL_OK) {
-        return HAL_ERROR;
-    }
-    stm32Time.time.Hours   = gTime.Hours;
-    stm32Time.time.Minutes = gTime.Minutes;
-    stm32Time.time.Seconds = gTime.Seconds;
-    stm32Time.date.Year    = gDate.Year;
-    stm32Time.date.Month   = gDate.Month;
-    stm32Time.date.Date    = gDate.Date;
-    return HAL_OK;
-}
-
 /* USER CODE END 4 */
 
 /**
@@ -513,7 +506,7 @@ void Error_Handler(void)
     __disable_irq();
     while (1) {
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-        HAL_Delay(100);
+        HAL_Delay(200);
     }
     /* USER CODE END Error_Handler_Debug */
 }

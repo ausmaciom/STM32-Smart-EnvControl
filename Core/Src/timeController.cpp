@@ -1,11 +1,11 @@
 #include "timeController.hpp"
 
-TimeController::TimeController(uint8_t* timeDemand) : state_(TimeController::State::CALIBRATING),
-lastResetDate_(0), needResetRTC_(true), timeDemand_(timeDemand)
+TimeController::TimeController() : state_(TimeController::State::CALIBRATING),
+lastResetDate_(0), needResetRTC_(true)
 {
 }
 
-HAL_StatusTypeDef TimeController::resetRTCWithTimePacket(timePacket *time)
+HAL_StatusTypeDef TimeController::resetRTCWithTimePacket(TimePacket *time)
 {
     RTC_TimeTypeDef sTime = {0};
     RTC_DateTypeDef sDate = {0};
@@ -25,39 +25,39 @@ HAL_StatusTypeDef TimeController::resetRTCWithTimePacket(timePacket *time)
     sDate.Year    = time->year; // RTC 支援後兩位年份
     sDate.Month   = time->month;
     sDate.Date    = time->day;
-    resetedDate_ = sDate.Date;
-    // sDate.WeekDay = time->weekday;
+    sDate.WeekDay = time->weekday;
 
     status = HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
     return status;
 }
 
 void TimeController::manageCalibrationCycle() {
-    // 假設每 24 小時校準一次
-    if (HAL_GetTick() - lastSyncTick > 172800000) {
-        g_txBuffer.timeRequest = 1; 
-    }
+    // // 假設每 24 小時校準一次
+    // if (HAL_GetTick() - lastSyncTick > 172800000) {
+    //     g_txBuffer.timeRequest = 1; 
+    // }
 }
 
-void TimeController::updateSystem(uint8_t* currentDate, timePacket* time)
+void TimeController::updateSystem(TimePacket* time)
 {
     switch (state_)
     {
     case TimeController::State::IDLE:
-        if (lastResetDate_ != *currentDate)
-        {
+        if (lastResetDate_ != time->day) {
             needResetRTC_ = true;
-            lastResetDate_ = *currentDate;
+            lastResetDate_ = time->day;
             state_ = TimeController::State::CALIBRATING;
         }
         break;
     case TimeController::State::CALIBRATING:
-        HAL_StatusTypeDef status = resetRTCWithTimePacket(*time);
-        if (status == HAL_OK)
         {
-            state_ = TimeController::State::IDLE;
+            HAL_StatusTypeDef status = resetRTCWithTimePacket(time);
+            if (status == HAL_OK)
+            {
+                state_ = TimeController::State::IDLE;
+            }
+            break;
         }
-        break;
     default:
         break;
     }

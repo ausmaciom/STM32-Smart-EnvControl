@@ -14,39 +14,17 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 static uint8_t rxBuffer[RX_BUFFER_SIZE];
 static uint8_t localRxBuffer[RX_BUFFER_SIZE];
 static SensorPacket txBuffer;
-static bool g_uartReady;
+static uint8_t g_uartReady;
 
 extern uint8_t g_iotCommand;
 extern uint8_t g_timeRequest;
-extern timePacket g_timeinfo;
+extern TimePacket g_timeinfo;
 
-#pragma pack(push, 1)
-typedef struct{
-    uint8_t year;   // 年
-    uint8_t month;  // 月
-    uint8_t day;    // 日
-    uint8_t hour;   // 時
-    uint8_t minute; // 分
-    uint8_t second; // 秒
-    uint8_t weekday; // 星期
-} timePacket;
-
-typedef struct 
-{
-    uint16_t startMarker;   // 起始標記 0xAA55
-    uint16_t hotTemp;       // 熱區溫度
-    uint16_t hotHumid;      // 熱區濕度
-    uint16_t coldTemp;      // 冷區溫度
-    uint16_t coldHumid;     // 冷區濕度
-    uint8_t ackStatus;      // 確認狀態
-    uint8_t timeRequest;    // 時間需求
-} SensorPacket;
-#pragma pack(pop)
 
 enum class CommStatus : uint8_t {
     IDLE    = 0x11,
     RECEIVED = 0x22
-}
+};
 
 // 本作用域函數
 static uint16_t convertFloatToInt(float value);
