@@ -72,7 +72,6 @@ static void MX_I2C2_Init(void);
 /* USER CODE BEGIN 0 */
 CommStatus g_commStatus
 
-timeStruct stm32Time = {0};
 SHTC3 hotSHT(&hi2c1);  // 熱端感測器
 SHTC3 coldSHT(&hi2c2); // 冷端感測器
 /* USER CODE END 0 */
