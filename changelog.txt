@@ -7,3 +7,5 @@
     3. 更新 uart 函式, 提高可讀性
 1.28:
     1. timeController wip. 用於更新rtc和封裝時間相關函式
+1.28.1:
+    TODO: 將Humidifier實做完成, uart, timeController優化
