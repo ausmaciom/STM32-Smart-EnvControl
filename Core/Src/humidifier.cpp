@@ -7,7 +7,7 @@
     * @attention
     *
 */
-Humidifier::Humidifier() : humidifyTimes_(0), needHumidify_(false), start_(0), isRunning_(false), end_(0)
+Humidifier::Humidifier() : start_(0), isRunning_(false), state_(true)
 {
 }
 
@@ -19,35 +19,38 @@ void Humidifier::begin(GPIO_TypeDef *port, uint16_t pin, uint8_t initialHour)
     end_         = HAL_GetTick() - HUMIDIFY_INTERVAL;
     HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_SET);
 }
-void Humidifier::updateState(uint8_t currentHour)
+
+void Humidifier::turnON()
 {
-    if (currentHour_ != currentHour) {
-        currentHour_   = currentHour;
-        humidifyTimes_ = 0;
-    }
-    if (humidifyTimes_ < MAX_TIMES_PER_HOUR && !isRunning_) {
-        needHumidify_ = true;
-    }
+    if (state_) return;
+    state_ = true;
 }
+
+void Humidifier::turnOFF()
+{
+    if (!state_) return;
+    state_ = false;
+}
+
 void Humidifier::humidify()
 {
-    if (!needHumidify_ && !isRunning_) return;
     uint32_t now = HAL_GetTick();
-
-    if (needHumidify_ && !isRunning_) {
+    if (!state_) {
+        if (isRunning_) {
+            isRunning_ = false;
+            end_       = now;
+            HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_SET); // 強制關閉
+        }
+        return;
+    }
+    if (!isRunning_) {
         if (now - end_ >= HUMIDIFY_INTERVAL) { // 冷卻檢查
             start_        = now;
             isRunning_    = true;
-            needHumidify_ = false;
-            humidifyTimes_++;
             HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_RESET);
-            
-        } else {
-            needHumidify_ = false;
         }
     }
-
-    if (isRunning_) {
+    else {
         if (now - start_ >= HUMIDIFY_DURATION) {
             isRunning_ = false;
             end_ = now;

@@ -72,17 +72,11 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float g_hotTemp = 0.0;
-float g_hotHumid = 0.0;
-float g_coldTemp = 0.0;
-float g_coldHumid = 0.0;
-// CommStatus g_commStatus;
+CommStatus g_commStatus;
 Humidifier humidifier;
 SHTC3 hotSHT(&hi2c1);  // 熱端感測器
 TimeController timeController;
 // SHTC3 coldSHT(&hi2c2); // 冷端感測器
-bool initialize = false;
-bool flag = false;
 /* USER CODE END 0 */
 
 /**
@@ -126,6 +120,19 @@ int main(void)
     /* USER CODE BEGIN 2 */
     // initUART();
     // HAL_Delay(100);
+    TimePacket timeinfo = {
+        .year    = 26,
+        .month   = 2,
+        .day     = 13,
+        .hour    = 12,
+        .minute  = 0,
+        .second  = 0,
+        .weekday = 5};
+    timeController.resetRTCWithTimePacket(&timeinfo);
+    humidifier.begin(GPIOB, GPIO_PIN_15, 12);
+    if (hotSHT.begin() != HAL_OK) {
+        Error_Handler();
+    }
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -134,35 +141,19 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        if (!initialize) {
-            initialize = true;
-            TimePacket timeinfo = {
-                .year    = 26,
-                .month   = 2,
-                .day     = 13,
-                .hour    = 12,
-                .minute  = 0,
-                .second  = 0,
-                .weekday = 5
-            };
-            timeController.resetRTCWithTimePacket(&timeinfo);
-            humidifier.begin(GPIOB, GPIO_PIN_15, 12);
-            if (hotSHT.begin() != HAL_OK) {
-                Error_Handler();
-            }
-        }
         if (hotSHT.readTempHumidity() != HAL_OK) {
             Error_Handler();
         }
-        g_hotHumid = hotSHT.getHumidity();
-        g_hotTemp = hotSHT.getTemperature();
-        RTC_TimeTypeDef currentTime = timeController.getCurrentTime();
-        if (g_hotHumid < 80.0f) {
-            humidifier.updateState(currentTime.Hours);
+        float hotHumid = hotSHT.getHumidity();
+        float hotTemp = hotSHT.getTemperature();
+        // RTC_TimeTypeDef currentTime = timeController.getCurrentTime();
+        if (hotHumid < 75.0f) {
+            humidifier.turnON();
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
         }
         else
         {
+            humidifier.turnOFF();
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
         }
 

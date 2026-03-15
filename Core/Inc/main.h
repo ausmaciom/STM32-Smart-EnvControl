@@ -35,8 +35,6 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern float g_hotTemp;
-extern float g_hotHumid;
 #pragma pack(push, 1)
 typedef struct {
     uint8_t year;    // 年

@@ -13,14 +13,14 @@ static uint16_t convertFloatToInt(float value)
     return (uint16_t)(value * 10.0f);
 }
 
-void sendSensorDataBinary()
+void sendSensorDataBinary(float hotTemp, float hotHumid, float coldTemp, float coldHumid)
 {
     if (g_uartReady != 1) return;
 
-    txBuffer.hotTemp = convertFloatToInt(g_hotTemp);
-    txBuffer.hotHumid = convertFloatToInt(g_hotHumid);
-    txBuffer.coldTemp = convertFloatToInt(g_coldTemp);
-    txBuffer.coldHumid = convertFloatToInt(g_coldHumid);
+    txBuffer.hotTemp = convertFloatToInt(hotTemp);
+    txBuffer.hotHumid = convertFloatToInt(hotHumid);
+    txBuffer.coldTemp = convertFloatToInt(coldTemp);
+    txBuffer.coldHumid = convertFloatToInt(coldHumid);
     txBuffer.ackStatus = (uint8_t)g_commStatus;
 
     if (HAL_UART_Transmit_DMA(&huart1, (uint8_t *)&g_txBuffer, sizeof(g_txBuffer)) == HAL_OK) {
