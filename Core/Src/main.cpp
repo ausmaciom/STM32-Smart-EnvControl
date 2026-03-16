@@ -25,6 +25,8 @@
 // #include "uart.h"
 #include "humidifier.hpp"
 #include "TimeController.hpp"
+#include "Loop.hpp"
+#include "fan.hpp"
 // #include "TempController.hpp"
 /* USER CODE END Includes */
 
@@ -72,9 +74,11 @@ static void MX_I2C2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-CommStatus g_commStatus;
 Humidifier humidifier;
 SHTC3 hotSHT(&hi2c1);  // 熱端感測器
+SHTC3 coldSHT(&hi2c2);
+Fan fan(GPIOB, GPIO_PIN_14);
+Loop loop;
 TimeController timeController;
 // SHTC3 coldSHT(&hi2c2); // 冷端感測器
 /* USER CODE END 0 */
@@ -133,6 +137,11 @@ int main(void)
     if (hotSHT.begin() != HAL_OK) {
         Error_Handler();
     }
+    if (coldSHT.begin() != HAL_OK) {
+        Error_Handler();
+    }
+    loop.initialize(&fan, &humidifier, &hotSHT, &coldSHT);
+
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -141,24 +150,8 @@ int main(void)
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        if (hotSHT.readTempHumidity() != HAL_OK) {
-            Error_Handler();
-        }
-        float hotHumid = hotSHT.getHumidity();
-        float hotTemp = hotSHT.getTemperature();
-        // RTC_TimeTypeDef currentTime = timeController.getCurrentTime();
-        if (hotHumid < 75.0f) {
-            humidifier.turnON();
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-        }
-        else
-        {
-            humidifier.turnOFF();
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-        }
-
-        humidifier.humidify();
-        HAL_Delay(1000);
+        loop.fsmUpdate();
+        HAL_Delay(300);
     }
     /* USER CODE END 3 */
 }
@@ -466,24 +459,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void testGPIO()
-{
-    // 暫時將PB6設定為普通輸出
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin              = GPIO_PIN_6; // SCL腳位
-    GPIO_InitStruct.Mode             = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull             = GPIO_NOPULL;
-    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    while (1) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // 3.3V
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // 0V
-        HAL_Delay(100);
-    }
-}
-
 /* USER CODE END 4 */
 
 /**

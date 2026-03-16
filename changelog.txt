@@ -22,3 +22,7 @@
         i. 新增風扇功能, 偵測過熱或過濕來自動換氣
         ii. 完善uart功能, 新增iot指令等等
         iii. 根據新iot指令動態調整humidifier
+1.31:
+    1. fan.cpp 實做完成
+    2. 狀態機完成
+    TODO: 將 iot 指令(uart) 完成, 新增風扇pin腳(relay), 移除timecontroller部份邏輯

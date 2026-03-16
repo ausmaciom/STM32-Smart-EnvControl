@@ -86,7 +86,7 @@ HAL_StatusTypeDef SHTC3::begin(void)
 	return HAL_OK;
 }
 
-SHTC3::SHTC3(I2C_HandleTypeDef *hi2c) : hi2c1_(hi2c), temperature(0.0f), humidity(0.0f)
+SHTC3::SHTC3(I2C_HandleTypeDef *hi2c) : hi2c1_(hi2c), temperature(0), humidity(0)
 {
 }
 
@@ -114,17 +114,17 @@ HAL_StatusTypeDef SHTC3::readTempHumidity()
 
     rawHumid = ((uint16_t)data[0] << 8) | data[1];
     rawTemp  = ((uint16_t)data[3] << 8) | data[4];
-	humidity = 100.0f * ((float)rawHumid / 65535.0f);          // 轉換為相對濕度百分比
-    temperature = -45.0f + 175.0f * ((float)rawTemp / 65535.0f);  // 轉換為攝氏度
+	humidity = 1000 * rawHumid / 65535; // e.g. 60.0濕度轉600
+	temperature = (int16_t)((1750UL * rawTemp) / 65535) - 450; // e.g. 23.0溫度轉235
 
 	sendCommand(SHTC3_CMD_SLEEP);
 
 	return HAL_OK;
 }
 
-float SHTC3::getTemperature() const {
+int16_t SHTC3::getTemperature() const {
     return temperature;
 }
-float SHTC3::getHumidity() const {
+uint16_t SHTC3::getHumidity() const {
 	return humidity;
 }

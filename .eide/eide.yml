@@ -32,6 +32,7 @@ targets:
     toolchain: GCC
     toolchainConfigMap:
       GCC:
+        archExtensions: ""
         cpuType: Cortex-M3
         floatingPointHardware: none
         options:
@@ -42,10 +43,10 @@ targets:
           beforeBuildTasks: []
           c/cpp-compiler:
             language-c: gnu11
-            language-cpp: gnu++14
+            language-cpp: gnu++11
             one-elf-section-per-data: true
             one-elf-section-per-function: true
-            optimization: level-debug
+            optimization: level-0
             warnings: all-warnings
           global:
             $float-abi-type: softfp
@@ -53,7 +54,6 @@ targets:
           linker:
             $toolName: auto
             LD_FLAGS: -TSTM32F103C8TX_FLASH.ld
-            LIB_FLAGS: -lc -lm -lnosys
             output-format: elf
             remove-unused-input-sections: true
         scatterFilePath: STM32F103C8TX_FLASH.ld
@@ -71,15 +71,10 @@ targets:
         otherCmds: ""
         proType: 1
         speed: 8000
-      OpenOCD:
-        baseAddr: "0x08000000"
-        bin: ""
-        interface: stlink
-        target: stm32f1x
       STLink:
         address: "0x08000000"
         bin: ""
-        elFile: None
+        elFile: ./build/Debug/test1.hex
         optionBytes: .eide/debug.st.option.bytes.ini
         otherCmds: ""
         proType: SWD
@@ -99,32 +94,34 @@ targets:
         - Drivers/CMSIS/Device/ST/STM32F1xx/Include
         - Drivers/CMSIS/Include
       libList: []
-    excludeList:
-      - Core/Src/uart.c
+    excludeList: []
     toolchain: GCC
     toolchainConfigMap:
       GCC:
-        archExtensions: ""
         cpuType: Cortex-M3
         floatingPointHardware: none
         options:
           version: 5
           afterBuildTasks: []
-          asm-compiler: {}
+          asm-compiler:
+            ASM_FLAGS: ""
           beforeBuildTasks: []
           c/cpp-compiler:
-            language-c: gnu17
-            language-cpp: gnu++17
+            CXX_FLAGS: ""
+            C_FLAGS: ""
+            language-c: c11
+            language-cpp: c++11
             one-elf-section-per-data: true
             one-elf-section-per-function: true
-            optimization: level-size
+            optimization: level-debug
             warnings: all-warnings
           global:
             $float-abi-type: softfp
-            arm-thumb-mode: thumb
+            misc-control: []
             output-debug-info: enable
           linker:
-            $toolName: auto
+            LD_FLAGS: ""
+            LIB_FLAGS: ""
             output-format: elf
             remove-unused-input-sections: true
         scatterFilePath: STM32F103C8TX_FLASH.ld

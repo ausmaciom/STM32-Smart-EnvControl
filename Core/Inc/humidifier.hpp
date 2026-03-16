@@ -20,12 +20,13 @@ private:
 	uint32_t end_;
 	bool isRunning_;
     bool state_;
-    static const uint32_t HUMIDIFY_DURATION = 5000; // 5秒
-	static const uint32_t HUMIDIFY_INTERVAL = 300000U; // 5分
+    static const uint32_t DURATION_ = 5000; // 5秒
+	static const uint32_t INTERVAL_ = 300000U; // 5分
 public:
     Humidifier();
 	void begin(GPIO_TypeDef *port, uint16_t pin, uint8_t initialHour);
     void turnON();
     void turnOFF();
-    void humidify();
+    bool humidify();
+    bool isCooldown();
 };
