@@ -48,7 +48,7 @@ HAL_StatusTypeDef isRxMessageOK()
     }
     else if (rxBuffer[1] == 0x02)
     {
-        g_iotCommand = g_rxBuffer[2];
+        g_iotCommand_ = g_rxBuffer[2];
         g_commStatus = CommStatus::IDLE; // 設置已收到iot command
         return HAL_OK;
     }

@@ -1,7 +1,10 @@
 #include "Loop.hpp"
 
 Loop::Loop() :
-	state_(SysState::MONITORING), shtStatus_(HAL_OK), iotCommand(0)
+	state_(SysState::MONITORING), shtStatus_(HAL_OK), iotCommand_(0),
+	fan_(nullptr), humidifier_(nullptr), hotSHT_(nullptr), coldSHT_(nullptr),
+	coldHumidMin_(600), hotHumidMin_(550), globalHumidMax_(750), hotTempMax_(310),
+	hotTempMin_(265)
 {
 }
 
@@ -32,30 +35,30 @@ HAL_StatusTypeDef Loop::updateSHTPacket()
 
 void Loop::decideNextAction()
 {
-	bool needsHumidify = (shtPacket_.coldHumid <= coldHumidMin) ||
-		(shtPacket_.hotHumid <= hotHumidMin) ||
-		(iotCommand == 1);
+	bool needsHumidify = (shtPacket_.coldHumid <= coldHumidMin_) ||
+		(shtPacket_.hotHumid <= hotHumidMin_) ||
+		(iotCommand_ == 1);
 	
 	if (needsHumidify && !humidifier_->isCooldown())
 	{
 		humidifier_->turnON();
 		state_ = SysState::HUMIDIFY;
-		iotCommand = 0;
+		iotCommand_ = 0;
 		return;
 	}
 
 	// 3 priorities
-	bool autoRequest = (shtPacket_.coldHumid > globalHumidMax) ||
-		(shtPacket_.hotHumid > globalHumidMax) ||
-		(shtPacket_.hotTemp > hotTempMax);
-	bool isSafeToVent = shtPacket_.hotTemp >= hotTempMin;
-	bool needsVent = (iotCommand == 2) || (autoRequest && isSafeToVent);
+	bool autoRequest = (shtPacket_.coldHumid > globalHumidMax_) ||
+		(shtPacket_.hotHumid > globalHumidMax_) ||
+		(shtPacket_.hotTemp > hotTempMax_);
+	bool isSafeToVent = shtPacket_.hotTemp >= hotTempMin_;
+	bool needsVent = (iotCommand_ == 2) || (autoRequest && isSafeToVent);
 
 	if (needsVent)
 	{
 		fan_->turnON();
 		state_ = SysState::VENT;
-		iotCommand = 0;
+		iotCommand_ = 0;
 	}
 }
 
@@ -67,17 +70,17 @@ void Loop::isVentFinish()
 		state_ = SysState::SYS_ERROR;
 		return;
 	}
-	bool autoFinish = (shtPacket_.coldHumid < (globalHumidMax - 50)) &&
-		(shtPacket_.hotHumid < (globalHumidMax - 50)) &&
-		(shtPacket_.hotTemp < (hotTempMax - 15));
+	bool autoFinish = (shtPacket_.coldHumid < (globalHumidMax_ - 50)) &&
+		(shtPacket_.hotHumid < (globalHumidMax_ - 50)) &&
+		(shtPacket_.hotTemp < (hotTempMax_ - 15));
 	bool timeout = fan_->isTimeout();
-	bool stopVent = (iotCommand == 3) || autoFinish || timeout;
+	bool stopVent = (iotCommand_ == 3) || autoFinish || timeout;
 
 	if (stopVent)
 	{
 		fan_->turnOFF();
 		state_ = SysState::MONITORING;
-		iotCommand = 0;
+		iotCommand_ = 0;
 	}
 }
 

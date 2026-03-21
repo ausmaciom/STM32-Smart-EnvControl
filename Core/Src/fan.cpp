@@ -7,7 +7,7 @@
 	* @attention
 	*
 */
-Fan::Fan(GPIO_TypeDef* port, uint8_t pin) :
+Fan::Fan(GPIO_TypeDef* port, uint16_t pin) :
 	port_(port), pin_(pin)
 {
 }
@@ -19,7 +19,7 @@ void Fan::turnOFF()
 	HAL_GPIO_WritePin(port_, pin_, GPIO_PIN_SET);
 }
 
-void Fan::turnOn()
+void Fan::turnON()
 {
 	if (isRunning_) return;
 	isRunning_ = true;
