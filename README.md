@@ -26,6 +26,3 @@
 * **humidifier.cpp**
     * 加濕器控制：負責加濕模組的啟停控制。
     * 硬體防護：實作冷卻鎖定 (Cooldown) 機制，防止繼電器或模組在臨界值附近頻繁開關導致損壞。
-
-* **TimeController.cpp**
-    * 時間管理：封裝 STM32 RTC (Real-Time Clock) 硬體操作，提供系統絕對時間紀錄，用於排程或日誌記錄。
