@@ -2,9 +2,8 @@
 #include "main.h"
 #include "fan.hpp"
 #include "humidifier.hpp"
-#include "timeController.hpp"
 #include "SHTC3.hpp"
-#include "uart.h"
+// #include "uart.h"
 
 class Loop
 {
@@ -24,14 +23,14 @@ private:
 	};
 
 	// variables
-	SysState state_ = SysState::MONITORING;
-	HAL_StatusTypeDef shtStatus_ = HAL_OK;
-	const uint16_t coldHumidMin = 600;
-	const uint16_t hotHumidMin = 550;
-	const uint16_t globalHumidMax = 750;
-	const uint16_t hotTempMax = 310;
-	const uint16_t hotTempMin = 265;
-	uint8_t iotCommand = 0;
+	SysState state_;
+	HAL_StatusTypeDef shtStatus_;
+	const uint16_t coldHumidMin_;
+	const uint16_t hotHumidMin_;
+	const uint16_t globalHumidMax_;
+	const uint16_t hotTempMax_;
+	const uint16_t hotTempMin_;
+	uint8_t iotCommand_;
 
 	// objects
 	Fan* fan_;

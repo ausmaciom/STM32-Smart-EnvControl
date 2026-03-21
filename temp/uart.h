@@ -16,10 +16,9 @@ static uint8_t localRxBuffer[RX_BUFFER_SIZE];
 static SensorPacket txBuffer;
 static uint8_t g_uartReady;
 
-extern uint8_t g_iotCommand;
+extern uint8_t g_iotCommand_;
 extern uint8_t g_timeRequest;
 extern TimePacket g_timeinfo;
-
 
 enum class CommStatus : uint8_t {
     IDLE    = 0x11,

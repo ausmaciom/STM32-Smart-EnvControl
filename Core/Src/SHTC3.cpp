@@ -86,12 +86,16 @@ HAL_StatusTypeDef SHTC3::begin(void)
 	return HAL_OK;
 }
 
-SHTC3::SHTC3(I2C_HandleTypeDef *hi2c) : hi2c1_(hi2c), temperature(0), humidity(0)
+SHTC3::SHTC3(I2C_HandleTypeDef* hi2c) : hi2c1_(hi2c), temperature_(0), humidity_(0), lastReadTick_(0)
 {
 }
 
 HAL_StatusTypeDef SHTC3::readTempHumidity()
 {
+	uint32_t now = HAL_GetTick();
+	if (now - lastReadTick_ < 1000) return HAL_BUSY;
+	lastReadTick_ = now;
+
 	HAL_StatusTypeDef status;
 	uint8_t data[6];
 	uint16_t rawHumid, rawTemp;
@@ -100,12 +104,12 @@ HAL_StatusTypeDef SHTC3::readTempHumidity()
 	if (status != HAL_OK) return status;
 	HAL_Delay(30);
 
-	status = sendCommand(SHTC3_CMD_MEAS_TEMP);
+	status = sendCommand(SHTC3_CMD_MEAS_HUM_FIR);
 	if (status != HAL_OK) return status;
 	HAL_Delay(30);
 
 	// 讀取數據（6位元組：濕度+CRC, 溫度+CRC）
-    status = HAL_I2C_Master_Receive(hi2c1_, (SHTC3_ADDR << 1) | 0x01, data, 6, 100);
+    status = HAL_I2C_Master_Receive(hi2c1_, (SHTC3_ADDR << 1), data, 6, 100);
     if (status != HAL_OK) return status;
 
 	if(!checkCRC(&data[0], 2, data[2]) || !checkCRC(&data[3], 2, data[5])) {
@@ -114,8 +118,8 @@ HAL_StatusTypeDef SHTC3::readTempHumidity()
 
     rawHumid = ((uint16_t)data[0] << 8) | data[1];
     rawTemp  = ((uint16_t)data[3] << 8) | data[4];
-	humidity = 1000 * rawHumid / 65535; // e.g. 60.0濕度轉600
-	temperature = (int16_t)((1750UL * rawTemp) / 65535) - 450; // e.g. 23.0溫度轉235
+	humidity_ = 1000 * rawHumid / 65535; // e.g. 60.0濕度轉600
+	temperature_ = (int16_t)((1750UL * rawTemp) / 65535) - 450; // e.g. 23.0溫度轉235
 
 	sendCommand(SHTC3_CMD_SLEEP);
 
@@ -123,8 +127,8 @@ HAL_StatusTypeDef SHTC3::readTempHumidity()
 }
 
 int16_t SHTC3::getTemperature() const {
-    return temperature;
+    return temperature_;
 }
 uint16_t SHTC3::getHumidity() const {
-	return humidity;
+	return humidity_;
 }
