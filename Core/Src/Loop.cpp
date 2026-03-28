@@ -68,9 +68,13 @@ void Loop::isVentFinish()
 	if (shtStatus_ != HAL_OK)
 	{
 		state_ = SysState::SYS_ERROR;
+		iotCommand_ = 0;
+		fan_->turnOFF();
 		return;
 	}
-	bool autoFinish = (shtPacket_.coldHumid < (globalHumidMax_ - 50)) &&
+	
+    // autoFinish : threshold temp: 1.5°C humid: 5.0%
+    bool autoFinish = (shtPacket_.coldHumid < (globalHumidMax_ - 50)) &&
 		(shtPacket_.hotHumid < (globalHumidMax_ - 50)) &&
 		(shtPacket_.hotTemp < (hotTempMax_ - 15));
 	bool timeout = fan_->isTimeout();
@@ -119,6 +123,7 @@ void Loop::fsmUpdate()
 			state_ = SysState::MONITORING;
 		break;
 	default:
+		state_ = SysState::MONITORING;
 		break;
 	}
 }
