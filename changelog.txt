@@ -26,3 +26,9 @@
     1. fan.cpp 實做完成
     2. 狀態機完成
     TODO: 將 iot 指令(uart) 完成, 新增風扇pin腳(relay), 移除timecontroller部份邏輯
+1.32:
+    發佈release
+1.33:
+    1. 移除timecontroller
+    2. 修正isVentFinish部分邏輯, 使sys_error時fan不會一直開著
+    3. 新增README.md
